@@ -56,22 +56,25 @@ async def log_stream():
 
                 print("RECEIVED:", data)             # ---- Debugg print ----
 
-# ------------------------------- Construction Zone ---------------------------
+                # -------------------------- Message Handling ---------------------------
                 
-                # If message is subscription status message, build channel_map.
+                # Handle subscriptionStatus messages.
                 if isinstance(data, dict) and data.get("event") == "subscriptionStatus":   
                     sub = data.get("subscription", {})  # get {"name", "interval"}, else return {}   
+                    channel_id = data["channelID"]      # store message channelID as channel_id
                     
                     # Standard normalization of pair name (Default to "UNKOWN").
                     pair = data.get("pair", "UKNOWN").replace("XBT", "BTC").replace("/", "")
 
-                    channel_map[data["channelID"]] = {
+                    channel_map[] = {  # build channel_map {type, pair, interval}
                         "type": sub.get("name"),        # get stream "name": trade, book-100, ticker, ohlc
                         "pair": pair,                   # processed and normalized pair name. (BTCUSD)
                         "interval": sub.get("interval") # get interval from ohlc stream or default to none.
                     }
 
-# -----------------------------------------------------------------------------
+                    print(f"[TAGGED] {"channel_ID"}: {channel_map[channel_id]}")    # print channelID for stream
+
+# ------------------------------- Construction Zone: Handle data messages (JSON ARRAY) ------------------------------------
 
                 # Handle actual data messages: [channelID, payload, metadata]
                 if isinstance(data, list) and len(data) >= 3:
