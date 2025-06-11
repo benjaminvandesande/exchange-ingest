@@ -6,6 +6,9 @@ import json                    # For parsing incoming JSON messages
 import os                      # For directory and file handling
 from datetime import datetime, timezone  # For timestamped log file naming
 
+# Channel Map for tagging and routing. 
+channel_map = {}
+
 # Kraken symbol format — BTC/USD is represented as XBT/USD on Kraken
 SYMBOL = "XBT/USD"
 
@@ -53,6 +56,21 @@ async def log_stream():
 
                 print("RECEIVED:", data)             # ---- Debugg print ----
 
+# ------------------------------- Construction Zone ---------------------------
+#               Adding Channel Map after loading in JSON payoad.
+                if isinstance(data, dict) and data.get("event") == "subscriptionStatus":        # check if subscription message
+                    sub = data.get("subscription", {})          # get subscription {"name": "trade"}
+                    
+                    # Standard normalization of pair name (Default to "UNKOWN").
+                    pair = data.get("pair", "UKNOWN").replace("XBT", "BTC").replace("/", "")
+
+                    channel_map["channelID"] = {
+                        "type": sub.get("name"),    # get stream "name": trade, book-100, ticker, ohlc
+                        "pair": pair,
+                        "interval": sub.get("interval")
+                    }
+
+# -----------------------------------------------------------------------------
 
                 # Skip system-level messages like event confirmations or heartbeats
                 if isinstance(data, dict) and "event" in data:
@@ -80,7 +98,7 @@ async def log_stream():
                             f.write(json.dumps(payload) + "\n")
 
             except json.JSONDecodeError:
-                continue  # Skip malformed JSON messages silently
+                continue  # Skip malformed JSON messages 
 
             except Exception as e:
                 # Print exception type and message for debug clarity
