@@ -68,7 +68,7 @@ async def log_stream():
 
                 print("RECEIVED:", data)             # ---- Debugg print ----
 
-                # -------------------------- Message Handling (Tag and Route) ---------------------
+                # -------------------------- Message Handling (Tag) ---------------------
                 # Handle subscriptionStatus messages:
                 # {"event": "subscriptionStatus",
                 #  "channelID": <119930881>,
@@ -116,7 +116,7 @@ async def log_stream():
 
                     print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
 
-# ------------------------------- Construction Zone: Parse Data Messages ------------------------------------
+# ------------------------------- Construction Zone: Route and Parse Data Messages ------------------------------------
                     parse_messages_here = payload  # just pass payload throuh for now.
 
                     # if stream "trade" ...
