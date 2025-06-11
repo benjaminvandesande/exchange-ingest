@@ -57,24 +57,21 @@ async def log_stream():
                 print("RECEIVED:", data)             # ---- Debugg print ----
 
 # ------------------------------- Construction Zone ---------------------------
-#               Adding Channel Map after loading in JSON payoad.
-                if isinstance(data, dict) and data.get("event") == "subscriptionStatus":        # check if subscription message
-                    sub = data.get("subscription", {})          # get subscription {"name": "trade"}
+                
+                # If message is subscription status message, build channel_map.
+                if isinstance(data, dict) and data.get("event") == "subscriptionStatus":   
+                    sub = data.get("subscription", {})  # get {"name", "interval"}, else return {}   
                     
                     # Standard normalization of pair name (Default to "UNKOWN").
                     pair = data.get("pair", "UKNOWN").replace("XBT", "BTC").replace("/", "")
 
-                    channel_map["channelID"] = {
-                        "type": sub.get("name"),    # get stream "name": trade, book-100, ticker, ohlc
-                        "pair": pair,
-                        "interval": sub.get("interval")
+                    channel_map[data["channelID"]] = {
+                        "type": sub.get("name"),        # get stream "name": trade, book-100, ticker, ohlc
+                        "pair": pair,                   # processed and normalized pair name. (BTCUSD)
+                        "interval": sub.get("interval") # get interval from ohlc stream or default to none.
                     }
 
 # -----------------------------------------------------------------------------
-
-                # Skip system-level messages like event confirmations or heartbeats
-                if isinstance(data, dict) and "event" in data:
-                    continue
 
                 # Handle actual data messages: [channelID, payload, metadata]
                 if isinstance(data, list) and len(data) >= 3:
