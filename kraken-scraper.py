@@ -1,4 +1,4 @@
-# scraper.py — Clean Kraken Scraper (Documented Line by Line)
+# scraper.py — Refactored Kraken Scraper (Construction Zones and Logic documented inline).
 
 import asyncio                 # For asynchronous event loop
 from datetime import datetime, timezone  # For timestamped log file naming
@@ -68,7 +68,7 @@ async def log_stream():
 
                 print("RECEIVED:", data)             # ---- Debugg print ----
 
-                # -------------------------- Message Handling ---------------------------
+                # -------------------------- Message Handling (Tag and Route) ---------------------
                 # Handle subscriptionStatus messages:
                 # {"event": "subscriptionStatus",
                 #  "channelID": <119930881>,
@@ -95,34 +95,43 @@ async def log_stream():
                     # print channelID for stream
                     print(f"[TAGGED] {"channel_ID"}: {channel_map[channel_id]}")
 
-# ------------------------------- Construction Zone: Handle data messages (JSON ARRAY) ------------------------------------                
-                if isinstance(data, list) and len(data) >= 3:
-                    #_, payload, meta = data         # Unpack message fields
-                    # --- comment out, trouble shoot unpack 3 error. ----
-                    if len(data) == 3:              # unpack message: 3 fields
-                        _, payload, meta = data     
-                    elif len(data) == 2:            # unpack message: 2 fields
-                        _, payload = data
-                        meta = {}
-                    else:                           # skip malformed messages
-                        continue                    
+                # Handle real-time data messages:
+                # [channelID, payload]
+                if isinstance(data, list) and isinstance(data[0], int):
+                    channel_id = data[0]
+                    payload = data[1]
 
+                    recv_time = datetime.now(timezone.utc).isoformat()    # store message timestamp
 
-                    if isinstance(meta, dict):
-                        stream_type = meta.get("channelName", "unknown")
-                        path = get_log_path(stream_type)  # Build path to log file
+                    # use the channel_map to get the stream_info
+                    stream_info = channel_map.get(channel_id)
+                    if not stream_info:
+                        print(f"[WARN] Unknown channel ID: {channel_id}")
+                        continue
 
-                        # Append raw payload to corresponding .jsonl log file
-                        with open(path, "a") as f:
-                            f.write(json.dumps(payload) + "\n")
+                    # create stream data fields
+                    stream_type = stream_info["type"]     
+                    pair = stream_info["pair"]
+                    interval = stream_info.get("interval")
 
+                    print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
+
+# ------------------------------- Construction Zone: Parse Data Messages ------------------------------------
+                    parse_messages_here = payload  # just pass payload throuh for now.
+
+                    # if stream "trade" ...
+                    #       parse trade (payload, stream_info) 
+                    
+
+          # ------------------------ Error Handling -------------------------
             except json.JSONDecodeError:
-                continue  # Skip malformed JSON messages 
+                continue  # Skip malformed JSON messages
 
+            # Prevent a full on crash, pause and reconnect.
             except Exception as e:
                 # Print exception type and message for debug clarity
                 print("Error:", type(e).__name__, str(e))
-                await asyncio.sleep(1)  # Brief pause before reconnecting or retrying
+                await asyncio.sleep(1)  # pause, reconnecting / retrying
 
 # Entry point — run the async listener
 if __name__ == "__main__":
