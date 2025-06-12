@@ -1,6 +1,11 @@
-# test_write_to_disc.py     Sanity check before running 24/7 scraper
-# Verify: proper mountpath, write access permissions granted, file io behaves as expected on linux.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+test_write_to_disc.py - Sanity check before running 24/7 scraper
 
+Verifies that the mount path exists, write permissions are in place, 
+and basic file I/O behaves as expected on Raspberry Pi. 
+"""
 import os
 import json
 from datetime import datetime, timezone
@@ -9,22 +14,23 @@ from datetime import datetime, timezone
 BASE_DIR = "/mnt/storage/data/raw"
 
 def test_disk_write():
-    '''
-    Disk write test to ensure proper scraper logging.
-    Gather "live-sample" from the scraper for data versioning update.
-    '''
-    pair = "BTCUSD"
+    """
+    Write single JSONL line under {BASE_DIR}/BTCUSD/test/{YYYY-MM-DDTHH}.jsonl 
+    to confirm permission, path, and encoding.
+    """
+    pair        = "BTCUSD"
     stream_type = "test"
-    hour = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H")
+    hour        = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H")
 
     dir_path = os.path.join(BASE_DIR, pair, stream_type)
     os.makedirs(dir_path, exist_ok=True)
 
-    file_path = os.path.join(dir_path, f"{hour}.jsonl")
-    with open(file_path, "a", encoding="utf-8") as f:
-        f.write(json.dumps({"test": "write", "time": hour}) + "\n")
+    path = os.path.join(dir_path, f"{hour}.jsonl")
+    with open(path, "a", encoding="utf-8") as f:
+        payload = {"test": "write", "time": hour}
+        f.write(json.dumps(payload) + "\n")
 
-    print(f"[OK] Test log written to: {file_path}")
+    print(f"[OK] Test log written to: {path}")
 
 if __name__ == "__main__":
     test_disk_write()
