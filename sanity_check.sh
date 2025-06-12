@@ -12,7 +12,7 @@ python3 "$SCRAPER_PATH" &
 PID=$!
 
 # 2) Let it run briefly to give a chance to connect and get at least 1 message
-sleep 1
+sleep 5
 
 # 3) Stop it after 1 second of data is logged
 kill $PID 2>/dev/null || true
