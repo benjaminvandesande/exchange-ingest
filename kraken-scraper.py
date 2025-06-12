@@ -1,4 +1,4 @@
-# scraper.py — Refactored Kraken Scraper (Construction Zones and Logic documented inline).
+# scraper.py — Refactored Kraken Scraper -- Underconstruction : Storage logic.
 
 import asyncio                 # For asynchronous event loop
 from datetime import datetime, timezone  # For timestamped log file naming
@@ -34,6 +34,19 @@ def stream_validator(payload, stream_info):
         print(f" [WARN] Unhandled stream type: {stream_type}")
     
     return payload
+
+def wrap_message(recv_time, channel_id, stream_info, payload):
+    '''
+    Builds the structure log message, including metadata {time, channel_id, stream_info, payload}
+    '''
+    return {
+        "recv_time": recv_time,                  # timestamp
+        "channel_id": channel_id,                # stream identifier
+        "stream_type": stream_info["type"],      # the name of the stream [trade, book, ticker, ohlc]
+        "pair": stream_info["pair"],             # name of the trading pair 
+        "interval": stream_info.get("interval"), # the interval if any
+        "message": payload,                      # raw message data
+    }
 
 # Kraken symbol format — BTC/USD is represented as XBT/USD on Kraken
 SYMBOL = "XBT/USD"
@@ -140,11 +153,14 @@ async def log_stream():
                     pair = stream_info["pair"]
                     interval = stream_info.get("interval")
 
+                    # Announce routing to storage
                     print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
-
-                    # -------- Routing Block: Send to stream validator -------------
-                    parsed = stream_validator(payload, stream_info)
+                    
+                    parsed = stream_validator(payload, stream_info)     # validate tag & route.
                     # parsed = payload                      # future development, currently need to validate streams
+
+                    wrapped = wrap_message(recv_time, channel_id, stream_info, parsed)
+
 
             # ------------------------ Error Handling -------------------------
             except json.JSONDecodeError:
