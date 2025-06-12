@@ -10,6 +10,20 @@ import websockets              # For WebSocket client connection
 # Channel Map for tagging and routing.
 channel_map = {}
 
+# Define the minimal parsers to construct frame
+def parse_trade(payload, stream_info):
+    return payload
+
+def parse_book(payload, stream_info):
+    return payload
+
+def parse_ticker(payload, stream_info):
+    return payload
+
+def parse_ohlc(payload, stream_info):
+    return payload
+
+
 # Kraken symbol format — BTC/USD is represented as XBT/USD on Kraken
 SYMBOL = "XBT/USD"
 
@@ -22,6 +36,7 @@ STREAMS = [
     {"name": "trade"},
     {"name": "book", "depth": 100},
     {"name": "ticker"}
+    {"name": "ohlc", "interval": 1}
 ]
 
 def get_log_path(stream_type):
@@ -116,14 +131,19 @@ async def log_stream():
 
                     print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
 
-# ------------------------------- Construction Zone: Route and Parse Data Messages ------------------------------------
-                    parse_messages_here = payload  # just pass payload throuh for now.
-
-                    # if stream "trade" ...
-                    #       parse trade (payload, stream_info) 
-                    
-
-          # ------------------------ Error Handling -------------------------
+                # --------- Routing Block: Send to respective parser by stream_type ---------------
+                if stream_type == "":
+                    parsed = parse_(payload, stream_info)
+                if stream_type == "":
+                    parsed = parse_(payload, stream_info)
+                if stream_type == "":
+                    parsed = parse_(payload, stream_info)
+                if stream_type == "":
+                    parsed = parse_(payload, stream_info)
+                else:
+                    print(f" [WARN] Unhandled stream type: {stream_type}")
+                    parsed = payload
+            # ------------------------ Error Handling -------------------------
             except json.JSONDecodeError:
                 continue  # Skip malformed JSON messages
 
