@@ -1,7 +1,5 @@
-#!/bin/bash
-# setup.sh
-
-set -e  # Exit immediately if a command fails
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Confirm python3 exists
 if ! command -v python3 >/dev/null 2>&1; then
@@ -18,8 +16,10 @@ fi
 echo "[INFO] Activating virtual environment..."
 source venv/bin/activate
 
+echo "[INFO] Upgrading pip..."
+python3 -m pip install --upgrade pip
+
 echo "[INFO] Installing dependencies from requirements.txt..."
-pip install --upgrade pip
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 echo "[SUCCESS] Environment setup complete."
