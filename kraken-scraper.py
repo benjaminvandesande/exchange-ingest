@@ -132,17 +132,19 @@ async def log_stream():
                     print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
 
                 # --------- Routing Block: Send to respective parser by stream_type ---------------
-                if stream_type == "":
-                    parsed = parse_(payload, stream_info)
-                if stream_type == "":
-                    parsed = parse_(payload, stream_info)
-                if stream_type == "":
-                    parsed = parse_(payload, stream_info)
-                if stream_type == "":
-                    parsed = parse_(payload, stream_info)
+                if stream_type == "trade":
+                    parsed = parse_trade(payload, stream_info)
+                elif stream_type == "book":
+                    parsed = parse_book(payload, stream_info)
+                elif stream_type == "ticker":
+                    parsed = parse_ticker(payload, stream_info)
+                elif stream_type == "ohlc":
+                    parsed = parse_ohlc(payload, stream_info)
                 else:
                     print(f" [WARN] Unhandled stream type: {stream_type}")
                     parsed = payload
+
+
             # ------------------------ Error Handling -------------------------
             except json.JSONDecodeError:
                 continue  # Skip malformed JSON messages
