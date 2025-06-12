@@ -134,7 +134,7 @@ async def log_stream():
                     }
 
                     # print channelID for stream
-                    print(f"[TAGGED] {"channel_ID"}: {channel_map[channel_id]}")
+                    print(f"[TAGGED] {channel_id}: {channel_map[channel_id]}")
 
                 # Handle real-time data messages:
                 # [channelID, payload]

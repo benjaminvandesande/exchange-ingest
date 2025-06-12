@@ -1,0 +1,3 @@
+{"recv_time": "2025-06-12T02:59:29.836019+00:00", "channel_id": 119930881, "stream_type": "trade", "pair": "BTCUSD", "interval": null, "message": [["108433.60000", "0.02766670", "1749697169.844958", "b", "m", ""]]}
+{"recv_time": "2025-06-12T02:59:31.769799+00:00", "channel_id": 119930881, "stream_type": "trade", "pair": "BTCUSD", "interval": null, "message": [["108433.60000", "0.00036889", "1749697171.778837", "b", "m", ""]]}
+{"recv_time": "2025-06-12T02:59:39.756108+00:00", "channel_id": 119930881, "stream_type": "trade", "pair": "BTCUSD", "interval": null, "message": [["108433.60000", "0.00010000", "1749697179.764966", "b", "l", ""]]}

@@ -3,3 +3,4 @@ rsa.txt
 venv/
 *mnt/market_logs/
 __pycache__/
+data/raw/*
