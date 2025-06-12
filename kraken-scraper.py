@@ -50,17 +50,19 @@ def get_log_path(base_dir, pair, stream_type):
     os.makedirs(dir_path, exist_ok=True)
     return os.path.join(dir_path, f"{hour}.jsonl")
 
-def wrap_message(recv_time, channel_id, stream_info, payload):
+def wrap_message(recv_time: str, wall_clock: str, ch_id: int, stream_info: dict, payload: dict):
     '''
     Add metadata to raw payload for storage.
+    Return wrapped message as dict.
     '''
     return {
-        "recv_time": recv_time,
-        "channel_id": channel_id,
-        "stream_type": stream_info["type"],
-        "pair": stream_info["pair"], 
-        "interval": stream_info.get("interval"),
-        "message": payload,
+        "recv_time":    recv_time,
+        "wall_clock":   wall_clock,
+        "channel_id":   ch_id,
+        "stream_type":  stream_info["type"],
+        "pair":         stream_info["pair"], 
+        "interval":     stream_info.get("interval"),
+        "message":      payload,
     }
 
 def log_error():
@@ -68,8 +70,8 @@ def log_error():
     print full stacktrace on error, write to errors.log file. 
     '''
     traceback.print_exc()
-                
-    # log fulll stacktrace to file: `errors.log`
+
+    # log full stacktrace to file
     with open("errors.log", "a", encoding="utf-8") as f:
         f.write(f"{datetime.now(timezone.utc).isoformat()} —\n")
         traceback.print_exc(file=f)
@@ -122,9 +124,10 @@ async def log_stream():
                     if not stream_info:
                         # unknown channel - skip
                         continue
-                    
+
                     recv_time = datetime.now(timezone.utc).isoformat()
-                    wrapped   = wrap_message(recv_time, ch_id, stream_info, payload)
+                    wall_clock = datetime.now().astimezone().isoformat()
+                    wrapped   = wrap_message(recv_time, wall_clock, ch_id, stream_info, payload)
                     path      = get_log_path(BASE_DIR, stream_info["pair"], stream_info["type"])
                     with open(path, "a", encoding="utf-8") as f:
                         f.write(json.dumps(wrapped) + "\n")
