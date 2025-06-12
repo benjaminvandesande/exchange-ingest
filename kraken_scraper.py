@@ -24,7 +24,7 @@ import websockets
 # 2. Module-level Constants
 # -----------------------------------------------------------------------------
 SYMBOL = "XBT/USD"                  # Kraken symbol for BTC/USD
-BASE_DIR = "examples/sanity_check.sh-test"               # Directory to store the output logs
+BASE_DIR = "/mnt/market_logs/data/raw"               # Directory to store the output logs
 STREAMS = [                         # Streams to subscribe to
     {"name": "trade"},
     {"name": "book", "depth": 100},
