@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-test_write_to_disc.py - Sanity check before running 24/7 scraper
+test_write_to_disk.py - Sanity check before running 24/7 scraper
 
 Verifies that the mount path exists, write permissions are in place, 
 and basic file I/O behaves as expected on Raspberry Pi. 
@@ -11,7 +11,10 @@ import json
 from datetime import datetime, timezone
 
 # Set to match base dir on the pi
-BASE_DIR = "data/raw"
+BASE_DIR = "examples/test_disk_write/result"
+PAIR     = "BTCUSD"
+STREAMS  = ["trade", "book", "ticker", "ohlc"]
+
 
 def test_disk_write():
     """
