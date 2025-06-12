@@ -36,6 +36,12 @@ Using the channel map, dispatch messages to their respective parse functions bas
 ### Branch `feature/store`
 Condenses stream specific parse stubs into a stream_validator to verify the streams before porting onto the Pi for longterm logging.
 
+### Branch `cleanup`
+Prepares for clone to Raspberry Pi by removing debugging and validation logic, clearing out redundant comments.
+
+### Branch `feature/live-test`
+Adds a function for live testing a write to the mounted hard disk.
+
 ### `examples/`
 Includes archived `.jsonl` logs of sample data outputs from websocket test run for version-controlled data verification.
 
@@ -58,7 +64,8 @@ Includes archived `.jsonl` logs of sample data outputs from websocket test run f
 ----
 
 ## Next Steps
-- Final test of `wrap_message()` and `get_log_path()` 
+- Final test using `test_write_to_disk.py`
+- Do a 2 minutes test run to ensure proper logging, then cut it and push to gitlab.
 - Start live storage on the Raspberry Pi 5
 
 ----
