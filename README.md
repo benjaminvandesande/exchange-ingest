@@ -1,6 +1,7 @@
 # README.md
 
 ## File Structure
+```
 scraper/
 ├── kraken-scraper.py                     
 ├── README.md                      
@@ -16,8 +17,9 @@ scraper/
             │   └── 2025-06-12T02.jsonl
             └── ohlc/
                 └── 2025-06-12T02.jsonl
-
+```
 ## Runtime logging output
+```
 data/
     └── raw/                       
         └── BTCUSD/
@@ -25,6 +27,11 @@ data/
             ├── book/
             ├── ticker/
             └── ohlc/
+```
+
+## Usage
+
+
 
 
 ### Branch `feature/tagging`
