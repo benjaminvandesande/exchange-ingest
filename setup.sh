@@ -1,8 +1,25 @@
 #!/bin/bash
 # setup.sh
 
-python3 -m venv venv
+set -e  # Exit immediately if a command fails
+
+# Confirm python3 exists
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "[ERROR] python3 not found. Please install it before running this script."
+    exit 1
+fi
+
+# Create venv if missing
+if [ ! -d "venv" ]; then
+    echo "[INFO] Creating virtual environment..."
+    python3 -m venv venv
+fi
+
+echo "[INFO] Activating virtual environment..."
 source venv/bin/activate
+
+echo "[INFO] Installing dependencies from requirements.txt..."
+pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "Environment setup complete. To activate: source venv/bin/activate"
+echo "[SUCCESS] Environment setup complete."
