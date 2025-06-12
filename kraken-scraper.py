@@ -63,19 +63,20 @@ STREAMS = [
     {"name": "ohlc", "interval": 1}
 ]
 
-def get_log_path(stream_type):
+def get_log_path(base_dir, pair, stream_type):
     '''
     Return full path to log file based on stream type, pair, and current UTC hour.
     Creates directories if they do not exist.
     '''
-    # --------- Construction Zone: refactor for hourly file storage -------
-    # Use UTC date for organizing logs
-    utc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    # Create subdirectory like data/raw/XBTUSD/trade/
-    dir_path = os.path.join(BASE_DIR, SYMBOL.replace("/", ""), stream_type)
+    
+    # Use UTC date and hour for organizing logs 
+    hour = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H") # get (Year/Month/Day/Hour)
+    # Create subdirectory data/raw/pair/stream_type/
+    dir_path = os.path.join(base_dir, pair, stream_type)
     os.makedirs(dir_path, exist_ok=True)
-    # Return full file path to current day’s log file
-    return os.path.join(dir_path, f"{utc_date}.jsonl")
+
+    # Return the file path with the hour appended.
+    return os.path.join(dir_path, f"{hour}.jsonl")
 
 # Main async function to run WebSocket listener
 async def log_stream():
@@ -161,8 +162,15 @@ async def log_stream():
                     parsed = stream_validator(payload, stream_info)
                     # Pass the payload direct to the wrapper when streams are valid
                 
+                    # Wrap message with context specific metadata for ease of structuring
                     wrapped = wrap_message(recv_time, channel_id, stream_info, parsed)      # swap param parsed, for payload when slimming code.
 
+                    # Generate the storage file path for the message
+                    file_path = get_log_path(BASE_DIR, pair, stream_type)
+                    
+                    # Open file for writing wrapped message followed by new line.
+                    with open(file_path, "a", encoding="utf-8") as f:
+                        f.write(json.dumps(wrapped) + "\n")
 
             # ------------------------ Error Handling -------------------------
             except json.JSONDecodeError:
