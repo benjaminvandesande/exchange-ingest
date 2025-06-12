@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # Adjust these if needed
-SCRAPER_PATH="./scraper/kraken-scraper.py"
-BASE_DIR="/mnt/market_logs/data/raw"
+SCRAPER_PATH="./kraken_scraper.py"
+BASE_DIR="examples/sanity_check.sh-test"
 PAIR="BTCUSD"
 STREAMS=("trade" "book" "ticker" "ohlc")
 
