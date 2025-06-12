@@ -10,39 +10,30 @@ import websockets              # For WebSocket client connection
 # Channel Map for tagging and routing.
 channel_map = {}
 
-# Define the minimal parsers (stub returning payload) to validate successful routing
-def parse_trade(payload, stream_info):
+def stream_validator(payload, stream_info):
     '''
-    minimal parser for trade stream messages
-    prints validation of successful routing only
+    parser stub for validating successful routing. 
+    prints a stream-specific confirmation message.
+    returns payloads unchanged. 
+    reference `routing-complete` tag branch on gitlab for parser stubs.
     '''
-    print(f"[PARSE:TRADE] {stream_info['pair']} : {len(payload)} trades")
-    return payload
 
-def parse_book(payload, stream_info):
-    '''
-    minimal parser for book stream messages
-    prints validation of successful routing only
-    '''
-    print(f"[PARSE:BOOK] {stream_info['pair']} : book update")
-    return payload
+    pair = stream_info["pair"]
+    interval = stream_info.get("interval")
+    stream_type = stream_info["type"]
 
-def parse_ticker(payload, stream_info):
-    '''
-    minimal parser for ticker stream messages
-    prints validation of successful routing only
-    '''
-    print(f"[PARSE:TICKER] {stream_info['pair']} : ticker update")
+    if stream_type == "trade":
+        print(f"[PARSE:TRADE] {pair} : {len(payload)} trades")
+    elif stream_type == "book":
+        print(f"[PARSE:BOOK] {pair} : book update")
+    elif stream_type == "ticker":
+        print(f"[PARSE:TICKER] {pair} : ticker update")
+    elif stream_type == "ohlc":
+        print(f"[PARSE:OHLC] {pair} : {interval}m candle")
+    else:
+        print(f" [WARN] Unhandled stream type: {stream_type}")
+    
     return payload
-
-def parse_ohlc(payload, stream_info):
-    '''
-    minimal parser for ohlc stream messages
-    prints validation of successful routing only
-    '''
-    print(f"[PARSE:OHLC] {stream_info['pair']} : {stream_info.get('interval')}m candle")
-    return payload
-
 
 # Kraken symbol format — BTC/USD is represented as XBT/USD on Kraken
 SYMBOL = "XBT/USD"
@@ -151,19 +142,9 @@ async def log_stream():
 
                     print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
 
-                    # -------- Routing Block: Send to respective parser by stream_type -------------
-                    if stream_type == "trade":
-                        parsed = parse_trade(payload, stream_info)
-                    elif stream_type == "book":
-                        parsed = parse_book(payload, stream_info)
-                    elif stream_type == "ticker":
-                        parsed = parse_ticker(payload, stream_info)
-                    elif stream_type == "ohlc":
-                        parsed = parse_ohlc(payload, stream_info)
-                    else:
-                        print(f" [WARN] Unhandled stream type: {stream_type}")
-                        parsed = payload
-
+                    # -------- Routing Block: Send to stream validator -------------
+                    parsed = stream_validator(payload, stream_info)
+                    # parsed = payload                      # future development, currently need to validate streams
 
             # ------------------------ Error Handling -------------------------
             except json.JSONDecodeError:
@@ -174,6 +155,7 @@ async def log_stream():
                 # Print exception type and message for debug clarity
                 print("Error:", type(e).__name__, str(e))
                 await asyncio.sleep(1)  # pause, reconnecting / retrying
+
 
 # Entry point — run the async listener
 if __name__ == "__main__":
