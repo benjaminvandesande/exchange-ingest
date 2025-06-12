@@ -10,31 +10,6 @@ import websockets              # For WebSocket client connection
 # Channel Map for tagging and routing.
 channel_map = {}
 
-def stream_validator(payload, stream_info):
-    '''
-    parser stub for validating successful routing. 
-    prints a stream-specific confirmation message.
-    returns payloads unchanged. 
-    reference `routing-complete` tag branch on gitlab for parser stubs.
-    '''
-
-    pair = stream_info["pair"]
-    interval = stream_info.get("interval")
-    stream_type = stream_info["type"]
-
-    if stream_type == "trade":
-        print(f"[PARSE:TRADE] {pair} : {len(payload)} trades")
-    elif stream_type == "book":
-        print(f"[PARSE:BOOK] {pair} : book update")
-    elif stream_type == "ticker":
-        print(f"[PARSE:TICKER] {pair} : ticker update")
-    elif stream_type == "ohlc":
-        print(f"[PARSE:OHLC] {pair} : {interval}m candle")
-    else:
-        print(f" [WARN] Unhandled stream type: {stream_type}")
-    
-    return payload
-
 def wrap_message(recv_time, channel_id, stream_info, payload):
     '''
     Builds the structure log message, including metadata {time, channel_id, stream_info, payload}
@@ -91,8 +66,6 @@ async def log_stream():
     url = "wss://ws.kraken.com/"  # Kraken public WebSocket endpoint
 
     async with websockets.connect(url) as ws:
-        print(f"Connected to Kraken for {SYMBOL}")
-
         # Subscribe to all requested streams for the given symbol
         for stream in STREAMS:
             sub_msg = {
@@ -107,17 +80,7 @@ async def log_stream():
                 message = await ws.recv()            # Receive raw message
                 data = json.loads(message)           # Parse JSON payload
 
-                print("RECEIVED:", data)             # ---- Debugg print ----
-
-                # -------------------------- Message Handling (Tag) ---------------------
-                # Handle subscriptionStatus messages:
-                # {"event": "subscriptionStatus",
-                #  "channelID": <119930881>,
-                #  "pair":"XBT/USD",
-                #  "subscription": {
-                #      "name":trade
-                #  }
-                # }
+                # Handle control messages:
                 if isinstance(data, dict) and data.get("event") == "subscriptionStatus":
                     # Store the name and interval from subscription field dict
                     sub = data.get("subscription", {})  # get {"name", "interval"} or {}.
@@ -133,42 +96,19 @@ async def log_stream():
                         "interval": sub.get("interval") # get interval from stream, default None.
                     }
 
-                    # print channelID for stream
-                    print(f"[TAGGED] {channel_id}: {channel_map[channel_id]}")
-
                 # Handle real-time data messages:
-                # [channelID, payload]
                 if isinstance(data, list) and isinstance(data[0], int):
+                    # Extract core variables
                     channel_id = data[0]
                     payload = data[1]
-
-                    recv_time = datetime.now(timezone.utc).isoformat()    # store message timestamp
-
-                    # use the channel_map to get the stream_info
+                    recv_time = datetime.now(timezone.utc).isoformat()
                     stream_info = channel_map.get(channel_id)
-                    if not stream_info:
-                        print(f"[WARN] Unknown channel ID: {channel_id}")
-                        continue
 
-                    # create stream data fields
-                    stream_type = stream_info["type"]
-                    pair = stream_info["pair"]
-                    interval = stream_info.get("interval")
-
-                    # Announce routing to storage
-                    print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
-                    
-                    # Validate message received and properly identified.
-                    parsed = stream_validator(payload, stream_info)
-                    # Pass the payload direct to the wrapper when streams are valid
-                
                     # Wrap message with context specific metadata for ease of structuring
-                    wrapped = wrap_message(recv_time, channel_id, stream_info, parsed)      # swap param parsed, for payload when slimming code.
+                    wrapped = wrap_message(recv_time, channel_id, stream_info, payload)
 
                     # Generate the storage file path for the message
-                    file_path = get_log_path(BASE_DIR, pair, stream_type)
-                    
-                    # Open file for writing wrapped message followed by new line.
+                    file_path = get_log_path(BASE_DIR, stream_info["pair"], stream_info["type"])
                     with open(file_path, "a", encoding="utf-8") as f:
                         f.write(json.dumps(wrapped) + "\n")
 

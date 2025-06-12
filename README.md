@@ -18,3 +18,14 @@ current task: create a wrapper for each message to be stored on disk with proper
 metadata: recv_time, channel_id, stream_type, pair, interval, message.
 
 the next step is to run the final storage after writing the wrapper code. 
+
+
+#### Message Handling (Tag) 
+Handle subscriptionStatus messages:
+    {"event": "subscriptionStatus",
+     "channelID": <119930881>,
+     "pair":"XBT/USD",
+     "subscription": {
+        "name":trade
+      }
+    }
