@@ -11,7 +11,7 @@ import json
 from datetime import datetime, timezone
 
 # Set to match base dir on the pi
-BASE_DIR = "/mnt/storage/data/raw"
+BASE_DIR = "data/raw"
 
 def test_disk_write():
     """
