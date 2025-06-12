@@ -2,16 +2,17 @@
 set -euo pipefail
 
 # Adjust these if needed
-SCRAPER_PATH="./kraken-scraper.py"
-BASE_DIR="mnt/market_logs/data/raw"
+SCRAPER_PATH="./scraper/kraken-scraper.py"
+#BASE_DIR="/mnt/market_logs/data/raw"
+BASE_DIR= "examples/sanity_check.sh-test"
 PAIR="BTCUSD"
 STREAMS=("trade" "book" "ticker" "ohlc")
 
 # 1) Start the scraper in the background
-python3 "$SCRAPER" &
+python3 "$SCRAPER_PATH" &
 PID=$!
 
-# 2) Let it run briefly to give a chance to connect and get atleast 1 message
+# 2) Let it run briefly to give a chance to connect and get at least 1 message
 sleep 1
 
 # 3) Stop it after 1 second of data is logged
