@@ -117,6 +117,18 @@ async def log_stream():
                 print("Error:", type(e).__name__, str(e))
                 await asyncio.sleep(1)  # pause, reconnecting / retrying
 
-# Entry point — run the async listener
+def main():
+    '''
+    Entry point for Kraken stream logger.
+    Handles runtime loop and clean shutdown.
+    '''
+    try:
+        asyncio.run(log_stream())
+    except KeyboardInterrupt:
+        print("\n[EXIT] Shutdown requested. Exiting cleanly...")
+    except Exception as e:
+        print(f"[ERROR] {type(e).__name__}: {e}")
+
+
 if __name__ == "__main__":
-    asyncio.run(log_stream())
+    main()
