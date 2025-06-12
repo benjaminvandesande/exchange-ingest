@@ -1,31 +1,78 @@
 # README.md
 
-### Branch `feature/tagging` 
-`feature/tagging` implements a generic style tagging of Kraken's messages by mapping the channelID to the stream to which it is referencing. 
+## File Structure
+scraper/
+├── kraken-scraper.py                     
+├── README.md                      
+├── .gitignore                     
+└── examples/
+    └── data-storage-sample/
+        └── BTCUSD/
+            ├── trade/
+            │   └── 2025-06-12T02.jsonl
+            ├── book/
+            │   └── 2025-06-12T02.jsonl
+            ├── ticker/
+            │   └── 2025-06-12T02.jsonl
+            └── ohlc/
+                └── 2025-06-12T02.jsonl
 
-`feature/routing` using the channel map, dispatch messages to their respective parse functions based on their tagged stream type. 
+## Runtime logging output
+data/
+    └── raw/                       
+        └── BTCUSD/
+            ├── trade/
+            ├── book/
+            ├── ticker/
+            └── ohlc/
 
-`feature/store` condense parse stubs into a stream_validator to verify the streams before porting onto the PI.
+
+### Branch `feature/tagging`
+Implements a generic style tagging of Kraken's messages by mapping the channelID to the stream to which it is referencing. 
+
+### Branch `feature/routing`
+Using the channel map, dispatch messages to their respective parse functions based on their tagged stream type. 
+
+### Branch `feature/store`
+Condenses stream specific parse stubs into a stream_validator to verify the streams before porting onto the Pi for longterm logging.
 
 ### `examples/`
-Includes sample data outputs from websocket for data progression tracking with version control.
-
-# Status
-as it stands, parsing has been dropped from the work flow. **no need to parse to add time stamps.** 
-routing logic ported into the stream_validator function to ensure messages are receiving proper.
-
-current task: create a wrapper for each message to be stored on disk with proper metadata
-metadata: recv_time, channel_id, stream_type, pair, interval, message.
-
-the next step is to run the final storage after writing the wrapper code. 
+Includes archived `.jsonl` logs of sample data outputs from websocket test run for version-controlled data verification.
 
 
-#### Message Handling (Tag) 
-Handle subscriptionStatus messages:
-    {"event": "subscriptionStatus",
-     "channelID": <119930881>,
-     "pair":"XBT/USD",
-     "subscription": {
-        "name":trade
-      }
+## Status
+- **Parsing dropped from logic:** no parsing required to add timestamps
+- **Routing condensed:** Routing is handled within `stream_validator()` for validation of tags for log path construction.
+- **Wrapper complete:** Messages are now wrapped with storage-relevant metadata.
+
+
+### Metadata added per messages: 
+- `recv_time`
+- `channel_id`
+- `stream_type`
+- `pair`
+- `interval` 
+- `message` (raw data payload)
+
+
+----
+
+## Next Steps
+- Final test of `wrap_message()` and `get_log_path()` 
+- Start live storage on the Raspberry Pi 5
+
+----
+
+## Message Handling (Tag) 
+Incoming control message format:
+```json
+{
+    "event": "subscriptionStatus",
+    "channelID": <119930881>,
+    "pair":"XBT/USD",
+    "subscription": {
+        "name": "trade"
     }
+}
+```
+
