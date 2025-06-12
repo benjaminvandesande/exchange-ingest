@@ -65,9 +65,10 @@ STREAMS = [
 
 def get_log_path(stream_type):
     '''
-    Helper function to build file path for log output
+    Return full path to log file based on stream type, pair, and current UTC hour.
+    Creates directories if they do not exist.
     '''
-
+    # --------- Construction Zone: refactor for hourly file storage -------
     # Use UTC date for organizing logs
     utc_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     # Create subdirectory like data/raw/XBTUSD/trade/
@@ -156,10 +157,11 @@ async def log_stream():
                     # Announce routing to storage
                     print(f"[ROUTE] {stream_type.upper()} @ {pair}{f' ({interval}m)' if interval else ''}")
                     
-                    parsed = stream_validator(payload, stream_info)     # validate tag & route.
-                    # parsed = payload                      # future development, currently need to validate streams
-
-                    wrapped = wrap_message(recv_time, channel_id, stream_info, parsed)
+                    # Validate message received and properly identified.
+                    parsed = stream_validator(payload, stream_info)
+                    # Pass the payload direct to the wrapper when streams are valid
+                
+                    wrapped = wrap_message(recv_time, channel_id, stream_info, parsed)      # swap param parsed, for payload when slimming code.
 
 
             # ------------------------ Error Handling -------------------------
