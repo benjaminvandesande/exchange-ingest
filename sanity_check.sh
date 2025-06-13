@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Activate the virtual environment
+if [ -f "./venv/bin/activate" ]; then
+    # shellcheck source=/dev/null
+    source venv/bin/activate
+fi
+
 # Adjust these if needed
 SCRAPER_PATH="./kraken_scraper.py"
-BASE_DIR="examples/sanity_check.sh-test"
+BASE_DIR="/mnt/market_logs/data/raw"
 PAIR="BTCUSD"
 STREAMS=("trade" "book" "ticker" "ohlc")
 
