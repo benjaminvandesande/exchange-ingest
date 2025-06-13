@@ -1,1 +1,3 @@
-{"recv_time": "2025-06-13T00:51:56.602536+00:00", "wall_clock": "2025-06-13T01:51:56.602543+01:00", "channel_id": 119930881, "stream_type": "trade", "pair": "BTCUSD", "interval": null, "message": [["104029.10000", "0.00005000", "1749775916.489573", "b", "l", ""]]}
+version https://git-lfs.github.com/spec/v1
+oid sha256:7579ee83c8e821832c3a652bb4778f77be35c701e39e5191e7515cc9b2043a84
+size 265
