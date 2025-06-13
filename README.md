@@ -18,6 +18,29 @@ scraper/
             └── ohlc/
                 └── 2025-06-12T02.jsonl
 ```
+
+## Gitlab Structure
+```
+market-logger/
+    ├── .gitignore
+    ├── README.md
+    ├── kraken_scraper.py
+    ├── requirements.txt
+    ├── sanity_check.sh
+    └── setup.sh
+    └── examples/
+        ├── data-storage-sample-v2/raw/BTCUSD
+        ├── data-storage-sample/raw/BTCUSD
+        └── sanity_logs/BTCUSD/                       
+        │    ├── book/
+        │    ├── ohlc/
+        │    ├── ticker/
+        │    └── trade/
+        └── preTRPS-sample_output.txt
+
+```
+
+
 ## Runtime logging output
 ```
 data/
