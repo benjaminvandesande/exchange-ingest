@@ -20,6 +20,11 @@ import os
 import traceback
 import websockets
 
+print("[DEBUG] kraken_scraper imported", flush=True)
+asyncio.get_event_loop().call_soon(
+    lambda: print("[DEBUG] event loop running", flush=True)
+)
+
 # -----------------------------------------------------------------------------
 # 2. Module-level Constants
 # -----------------------------------------------------------------------------
@@ -135,6 +140,7 @@ async def log_stream():
                             path      = get_log_path(BASE_DIR, stream_info["pair"], stream_info["type"])
                             with open(path, "a", encoding="utf-8") as f:
                                 f.write(json.dumps(wrapped) + "\n")
+
                     except json.JSONDecodeError:
                         continue
                     except websockets.exceptions.ConnectionClosed:
