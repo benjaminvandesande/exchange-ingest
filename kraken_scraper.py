@@ -88,58 +88,67 @@ async def log_stream():
     receive, tag, wrap, and write messages to disk.
     '''
     url = "wss://ws.kraken.com/"  # Kraken public WebSocket endpoint
-    async with websockets.connect(url) as ws:
-        # Subscribe to all requested STREAMS for SYMBOL
-        for sub in STREAMS:
-            await ws.send(json.dumps({
-                "event": "subscribe",
-                "pair": [SYMBOL],
-                "subscription": sub
-            }))
-        
-        # Keep listening FOREVER
-        while True:
-            try:
-                raw = await ws.recv()
-                data = json.loads(raw)
 
-                # Handle control messages (tag channel info)
-                if isinstance(data, dict) and data.get("event") == "subscriptionStatus":
-                    ch_id   = data["channelID"]
-                    sub     = data["subscription"]
-                    pair    = data.get("pair", "").replace("XBT", "BTC").replace("/", "")
-                    channel_map[ch_id] = {
-                        "type":     sub["name"],        
-                        "pair":     pair,                   
-                        "interval": sub.get("interval") 
-                    }
-                    continue
+    # Reconnect Loop
+    while True:
+        try:
+            async with websockets.connect(url) as ws:
+            # Subscribe to all requested STREAMS for SYMBOL
+                for sub in STREAMS:
+                    await ws.send(json.dumps({
+                        "event": "subscribe",
+                        "pair": [SYMBOL],
+                        "subscription": sub
+                    }))
 
-                # Handle real-time data messages
-                if isinstance(data, list) and isinstance(data[0], int):
-                    # Extract core variables
-                    ch_id       = data[0]
-                    payload     = data[1]
-                    stream_info = channel_map.get(ch_id)
-                    if not stream_info:
-                        # unknown channel - skip
+                # Keep listening FOREVER
+                while True:
+                    try:
+                        raw = await ws.recv()
+                        data = json.loads(raw)
+
+                        # Handle control messages (tag channel info)
+                        if isinstance(data, dict) and data.get("event") == "subscriptionStatus":
+                            ch_id   = data["channelID"]
+                            sub     = data["subscription"]
+                            pair    = data.get("pair", "").replace("XBT", "BTC").replace("/", "")
+                            channel_map[ch_id] = {
+                                "type":     sub["name"],        
+                                "pair":     pair,                   
+                                "interval": sub.get("interval") 
+                            }
+                            continue
+
+                        # Handle real-time data messages
+                        if isinstance(data, list) and isinstance(data[0], int):
+                            # Extract core variables
+                            ch_id       = data[0]
+                            payload     = data[1]
+                            stream_info = channel_map.get(ch_id)
+                            if not stream_info:
+                                # unknown channel - skip
+                                continue
+
+                            recv_time = datetime.now(timezone.utc).isoformat()
+                            wall_clock = datetime.now().astimezone().isoformat()
+                            wrapped   = wrap_message(recv_time, wall_clock, ch_id, stream_info, payload)
+                            path      = get_log_path(BASE_DIR, stream_info["pair"], stream_info["type"])
+                            with open(path, "a", encoding="utf-8") as f:
+                                f.write(json.dumps(wrapped) + "\n")
+                    except json.JSONDecodeError:
                         continue
+                    except websockets.exceptions.ConnectionClosed:
+                        print("[WARN] WebSocket closed. Reconnecting...")
+                        break
+                    except Exception:
+                        log_error()
+                        await asyncio.sleep(1)                      # pause and retry
 
-                    recv_time = datetime.now(timezone.utc).isoformat()
-                    wall_clock = datetime.now().astimezone().isoformat()
-                    wrapped   = wrap_message(recv_time, wall_clock, ch_id, stream_info, payload)
-                    path      = get_log_path(BASE_DIR, stream_info["pair"], stream_info["type"])
-                    with open(path, "a", encoding="utf-8") as f:
-                        f.write(json.dumps(wrapped) + "\n")
+        except Exception as e:
+            log_error()
+            print(f"[WARN] Cannot connect: {e!r}. Retry in 5s...")
+            await asyncio.sleep(5)                                  # pause and retry
 
-            # ------------------------ Error Handling -------------------------
-            except json.JSONDecodeError:
-                # malformed json - skip
-                continue  
-
-            except Exception:
-                log_error()
-                await asyncio.sleep(1)
 
 # -----------------------------------------------------------------------------
 # 6. Entry Point
