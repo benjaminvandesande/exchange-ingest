@@ -74,15 +74,22 @@ Prepares for clone to Raspberry Pi by removing debugging and validation logic, c
 Adds a function for live testing a write to the mounted hard disk.
 
 ### Branch `error/connectClosed`
-Add a top level try/except for ConnectionClosedError
+Add a top level try/except for ConnectionClosedError.
+Need to write a loop that restarts the loop when the loop stops. 
+
 
 ### `examples/`
 Includes archived `.jsonl` logs of sample data outputs from websocket test run for version-controlled data verification.
 
 
 ## Status
-
-
+Adding the watcher loop appears to have solved the reconnection issue, been stream since last night. 
+- Add logging to know exactly where errors occur, how to know where the crashes occured?
+- Need to created output that verifies connection is live so i can SSH in and check. like a ping every 10 seconds or something.
+- Send tails of each stream to gitlab once a day over writing yesterdays tails (automate it, just to check that every day the most recent files match the accurate timestamp)
+- include a snap shot of each streams file creation for the past 24 hours
+  - `sudo journalctl -u market-logger.service -f --output=cat | grep HEARTBEAT`
+  - `ls /mnt/market_logs/data/raw/BTCUSD/book | tail -5`
 
 ### Metadata added per messages: 
 - `recv_time`
@@ -91,27 +98,4 @@ Includes archived `.jsonl` logs of sample data outputs from websocket test run f
 - `pair`
 - `interval` 
 - `message` (raw data payload)
-
-
-----
-
-## Next Steps
-- Final test using `test_write_to_disk.py`
-- Do a 2 minutes test run to ensure proper logging, then cut it and push to gitlab.
-- Start live storage on the Raspberry Pi 5
-
-----
-
-## Message Handling (Tag) 
-Incoming control message format:
-```json
-{
-    "event": "subscriptionStatus",
-    "channelID": <119930881>,
-    "pair":"XBT/USD",
-    "subscription": {
-        "name": "trade"
-    }
-}
-```
 
