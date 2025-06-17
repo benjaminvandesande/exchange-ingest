@@ -90,13 +90,19 @@ async def log_stream():
     Connect to Kraken WS, subscribe to streams, and continuously
     receive, tag, wrap, and write messages to disk.
     '''
+
+    print("[DEBUG] log_stream() entered", flush=True)
+
+
     url = "wss://ws.kraken.com/"  # Kraken public WebSocket endpoint
 
     # Reconnect Loop
     while True:
+        print("[INFO] Opening WebSocket...", flush=True)
         try:
             async with websockets.connect(url) as ws:
-            # Subscribe to all requested STREAMS for SYMBOL
+                print("[INFO] Connected. Subscribing to streams...", flush=True)
+                # Subscribe to all requested STREAMS for SYMBOL
                 for sub in STREAMS:
                     await ws.send(json.dumps({
                         "event": "subscribe",
