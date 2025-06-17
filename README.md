@@ -73,14 +73,15 @@ Prepares for clone to Raspberry Pi by removing debugging and validation logic, c
 ### Branch `feature/live-test`
 Adds a function for live testing a write to the mounted hard disk.
 
+### Branch `error/connectClosed`
+Add a top level try/except for ConnectionClosedError
+
 ### `examples/`
 Includes archived `.jsonl` logs of sample data outputs from websocket test run for version-controlled data verification.
 
 
 ## Status
-- **Parsing dropped from logic:** no parsing required to add timestamps
-- **Routing condensed:** Routing is handled within `stream_validator()` for validation of tags for log path construction.
-- **Wrapper complete:** Messages are now wrapped with storage-relevant metadata.
+
 
 
 ### Metadata added per messages: 
