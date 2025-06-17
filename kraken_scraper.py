@@ -21,9 +21,7 @@ import traceback
 import websockets
 
 print("[DEBUG] kraken_scraper imported", flush=True)
-asyncio.get_event_loop().call_soon(
-    lambda: print("[DEBUG] event loop running", flush=True)
-)
+
 
 # -----------------------------------------------------------------------------
 # 2. Module-level Constants
@@ -163,6 +161,7 @@ def main():
     '''
     Handles runtime loop and clean shutdown.
     '''
+    print("[DEBUG] main() entered", flush=True)
     try:
         asyncio.run(log_stream())
     except KeyboardInterrupt:
