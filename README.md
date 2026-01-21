@@ -90,9 +90,3 @@ Notes:
 
 ## Relationship to downstream repos and the paper
 This repo produces raw ingestion data used by downstream ETL/feature pipelines in `market-pipe` and modeling workflows in `simple-model`. Those downstream repos (and the paper that references them) are separate and are not required to run this logger.
-
-## Public release checklist
-- Verify all paths and usernames in `market-logger.service-systemd.txt`.
-- Confirm `BASE_DIR` points to a writable location on the target system.
-- Ensure no environment-specific artifacts or data outputs are included.
-- Add or confirm repository metadata (license, archive note, citation).
