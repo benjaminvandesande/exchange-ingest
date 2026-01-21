@@ -26,9 +26,9 @@ print("[DEBUG] kraken_scraper imported", flush=True)
 # -----------------------------------------------------------------------------
 # 2. Module-level Constants
 # -----------------------------------------------------------------------------
-SYMBOL = "XBT/USD"                  # Kraken symbol for BTC/USD
-BASE_DIR = "/mnt/market_logs/data/raw"               # Directory to store the output logs
-STREAMS = [                         # Streams to subscribe to
+SYMBOL = "XBT/USD"                      # Kraken symbol for BTC/USD
+BASE_DIR = "/mnt/market_logs/data/raw"  # Directory to store the output logs
+STREAMS = [                             # Streams to subscribe to
     {"name": "trade"},
     {"name": "book", "depth": 100},
     {"name": "ticker"},
@@ -107,7 +107,7 @@ async def log_stream():
                     await ws.send(json.dumps({
                         "event": "subscribe",
                         "pair": [SYMBOL],
-                        "subscription": sub
+                        "subscription": sub,
                     }))
 
                 # Keep listening FOREVER
