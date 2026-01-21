@@ -1,101 +1,98 @@
-# README.md
+# exchange-ingest
 
-## File Structure
-```
-scraper/
-├── kraken-scraper.py                     
-├── README.md                      
-├── .gitignore                     
-└── examples/
-    └── data-storage-sample/
-        └── BTCUSD/
-            ├── trade/
-            │   └── 2025-06-12T02.jsonl
-            ├── book/
-            │   └── 2025-06-12T02.jsonl
-            ├── ticker/
-            │   └── 2025-06-12T02.jsonl
-            └── ohlc/
-                └── 2025-06-12T02.jsonl
-```
+## Overview
+This repository is the ingestion/capture component used in my research infrastructure. It connects to Kraken's public WebSocket feeds, subscribes to configured streams, minimally tags each message, and writes raw structured data to disk for downstream ETL and experiments. It is not a trading bot, a backfill service, or a data-cleaning/analytics pipeline. It intentionally does not include captured market data; all data outputs shown are illustrative of on-disk structure only.
 
-## Gitlab Structure
-```
-market-logger/
-    ├── .gitignore
-    ├── README.md
-    ├── kraken_scraper.py
-    ├── requirements.txt
-    ├── sanity_check.sh
-    └── setup.sh
-    └── examples/
-        ├── data-storage-sample-v2/raw/BTCUSD
-        ├── data-storage-sample/raw/BTCUSD
-        └── sanity_logs/BTCUSD/                       
-        │    ├── book/
-        │    ├── ohlc/
-        │    ├── ticker/
-        │    └── trade/
-        └── preTRPS-sample_output.txt
+## High-level data flow
+1. Connect to Kraken's public WebSocket endpoint.
+2. Subscribe to the configured streams for `SYMBOL`.
+3. Map Kraken channel IDs to stream metadata from subscription status messages.
+4. For each data message, wrap the payload with minimal metadata and append to an hourly JSONL file.
 
+## Outputs
+Default output root is `BASE_DIR=/mnt/market_logs/data/raw` (configurable in `kraken_scraper.py`).
+
+Directory layout:
+```
+BASE_DIR/
+  BTCUSD/
+    trade/
+      2025-06-12T02.jsonl
+    book/
+      2025-06-12T02.jsonl
+    ticker/
+      2025-06-12T02.jsonl
+    ohlc/
+      2025-06-12T02.jsonl
 ```
 
+File format:
+- Each line is a standalone JSON object (JSONL).
+- Fields added by the logger:
+  - `recv_time` (UTC ISO timestamp)
+  - `wall_clock` (local ISO timestamp)
+  - `channel_id`
+  - `stream_type`
+  - `pair` (e.g., `BTCUSD` derived from Kraken `XBT/USD`)
+  - `interval` (only present for interval streams, e.g., OHLC)
+  - `message` (raw payload from Kraken)
 
-## Runtime logging output
+## Reproduction Quickstart
+Minimal install and run:
 ```
-data/
-    └── raw/                       
-        └── BTCUSD/
-            ├── trade/
-            ├── book/
-            ├── ticker/
-            └── ohlc/
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 kraken_scraper.py
 ```
 
-## Usage
------ construction zone -----
-List setup commmands here
+Alternatively, run:
+```
+./setup.sh
+python3 kraken_scraper.py
+```
 
+## Raspberry Pi + systemd
+The file `market-logger.service-systemd.txt` is a template systemd unit used on a headless Raspberry Pi. To use it:
+1. Copy it to `/etc/systemd/system/market-logger.service`.
+2. Update `User`, `WorkingDirectory`, and `ExecStart` for your environment.
+3. Reload and start the service:
+```
+sudo systemctl daemon-reload
+sudo systemctl enable --now market-logger.service
+```
+To tail logs:
+```
+journalctl -u market-logger.service -f
+```
 
+## Configuration
+Edit constants in `kraken_scraper.py`:
+- `SYMBOL`: Kraken pair symbol (default `XBT/USD`).
+- `BASE_DIR`: Output root directory (default `/mnt/market_logs/data/raw`).
+- `STREAMS`: List of Kraken subscription objects (default: trade, book depth 100, ticker, ohlc interval 1).
 
-### Branch `feature/tagging`
-Implements a generic style tagging of Kraken's messages by mapping the channelID to the stream to which it is referencing. 
+Notes:
+- Output `pair` is derived from Kraken subscription status messages by replacing `XBT` with `BTC` and removing `/`.
+- The script creates stream subdirectories on write if they do not exist.
 
-### Branch `feature/routing`
-Using the channel map, dispatch messages to their respective parse functions based on their tagged stream type. 
+## Operational notes
+- Hourly file rotation is based on current UTC time at write time.
+- Errors are printed to stderr and appended to `errors.log` in the working directory.
+- `sanity_check.sh` runs the scraper briefly and checks for newly written files.
 
-### Branch `feature/store`
-Condenses stream specific parse stubs into a stream_validator to verify the streams before porting onto the Pi for longterm logging.
+## Limitations / non-goals
+- No data validation beyond minimal tagging.
+- No backfill, deduplication, or schema normalization.
+- No compression, retention policy, or file lifecycle management.
+- No metrics, health checks, or heartbeat beyond stdout/stderr logs.
+- No CLI or config file; configuration is via constants in code.
 
-### Branch `cleanup`
-Prepares for clone to Raspberry Pi by removing debugging and validation logic, clearing out redundant comments.
+## Relationship to downstream repos and the paper
+This repo produces raw ingestion data used by downstream ETL/feature pipelines in `market-pipe` and modeling workflows in `simple-model`. Those downstream repos (and the paper that references them) are separate and are not required to run this logger.
 
-### Branch `feature/live-test`
-Adds a function for live testing a write to the mounted hard disk.
-
-### Branch `error/connectClosed`
-Add a top level try/except for ConnectionClosedError.
-Need to write a loop that restarts the loop when the loop stops. 
-
-
-### `examples/`
-Includes archived `.jsonl` logs of sample data outputs from websocket test run for version-controlled data verification.
-
-
-## Status
-Adding the watcher loop appears to have solved the reconnection issue, been stream since last night. 
-- Add logging to know exactly where errors occur, how to know where the crashes occured?
-- Need to created output that verifies connection is live so i can SSH in and check. like a ping every 10 seconds or something.
-- Send tails of each stream to gitlab once a day over writing yesterdays tails (automate it, just to check that every day the most recent files match the accurate timestamp)
-- include a snap shot of each streams file creation for the past 24 hours
-  - `sudo journalctl -u market-logger.service -f --output=cat | grep HEARTBEAT`
-  - `ls /mnt/market_logs/data/raw/BTCUSD/book | tail -5`
-
-### Metadata added per messages: 
-- `recv_time`
-- `channel_id`
-- `stream_type`
-- `pair`
-- `interval` 
-- `message` (raw data payload)
-
+## Public release checklist
+- Verify all paths and usernames in `market-logger.service-systemd.txt`.
+- Confirm `BASE_DIR` points to a writable location on the target system.
+- Ensure no environment-specific artifacts or data outputs are included.
+- Add or confirm repository metadata (license, archive note, citation).
