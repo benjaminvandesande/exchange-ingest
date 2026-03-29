@@ -1,12 +1,11 @@
-GNU nano 7.2        /etc/systemd/system/market-logger.service                 
 [Unit]
 Description=Market Logger Scraper
 After=network-online.target
 Wants=network-online.target
 [Service]
 Type=simple
-User=lifecloud
-WorkingDirectory=/home/lifecloud/market-logger
+User=your-user
+WorkingDirectory=/path/to/market-logger
 ExecStart=/bin/bash -lc 'source venv/bin/activate && python3 kraken_scraper.py'
 Restart=always
 RestartSec=5

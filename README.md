@@ -1,7 +1,10 @@
 # exchange-ingest
 
 ## Overview
-This repository is the ingestion/capture component used in my research infrastructure. It connects to Kraken's public WebSocket feeds, subscribes to configured streams, minimally tags each message, and writes raw structured data to disk for downstream ETL and experiments. It is not a trading bot, a backfill service, or a data-cleaning/analytics pipeline. It intentionally does not include captured market data; all data outputs shown are illustrative of on-disk structure only.
+This repository is the ingestion/capture component used in my research infrastructure. It connects to Kraken's public WebSocket feeds, subscribes to configured streams, minimally annotates each message, and writes raw structured data to disk for downstream ETL and experiments. It is not a backfill service or a data-cleaning/analytics pipeline.
+
+## Data and usage note
+This repository does not include captured market data. Kraken market data used in this research was collected with permission for research purposes. If collected data or derivative use is later commercialized or monetized, Kraken may require additional notice or separate permission. Users are responsible for reviewing the applicable terms for their own use case.
 
 ## High-level data flow
 1. Connect to Kraken's public WebSocket endpoint.
@@ -37,23 +40,27 @@ File format:
   - `interval` (only present for interval streams, e.g., OHLC)
   - `message` (raw payload from Kraken)
 
-## Reproduction Quickstart
+## Setup & Run
 Minimal install and run:
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 python3 kraken_scraper.py
 ```
 
 Alternatively, run:
 ```
 ./setup.sh
-python3 kraken_scraper.py
+./venv/bin/python3 kraken_scraper.py
 ```
 
+Ensure `BASE_DIR` is writable by the current user. 
+
+The script will create the pair/stream subdirectories as needed, but it cannot create parent directories in locations where the user lacks permission.
+
 ## Raspberry Pi + systemd
-The file `market-logger.service-systemd.txt` is a template systemd unit used on a headless Raspberry Pi. To use it:
+The file `market-logger.service.example` is a template systemd unit used on a headless Raspberry Pi. To use it:
 1. Copy it to `/etc/systemd/system/market-logger.service`.
 2. Update `User`, `WorkingDirectory`, and `ExecStart` for your environment.
 3. Reload and start the service:
@@ -79,7 +86,7 @@ Notes:
 ## Operational notes
 - Hourly file rotation is based on current UTC time at write time.
 - Errors are printed to stderr and appended to `errors.log` in the working directory.
-- `sanity_check.sh` runs the scraper briefly and checks for newly written files.
+- `sanity_check.sh` runs the scraper briefly, then checks for newly written files under the configured `BASE_DIR`.
 
 ## Limitations / non-goals
 - No data validation beyond minimal tagging.

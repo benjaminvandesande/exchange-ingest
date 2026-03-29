@@ -1,63 +1,40 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-kraken-scraper.py - Kraken Websocket stream logger
+Kraken WebSocket stream logger.
 
-Logs trade, book, icker, and OHLC, streams into hourly JSONL files,
-with full error tracing to console and errors.log.
-
-Gets Stream for specified SYMBOL.
-
-Writes to specified BASEDIR.
+Subscribes to configured Kraken market data streams for a single symbol,
+wraps each message with minimal metadata, and writes hourly JSONL logs
+to disk for downstream ETL and experiments.
 """
-# -----------------------------------------------------------------------------
-# 1. Library imports
-# -----------------------------------------------------------------------------
+
 import asyncio
 from datetime import datetime, timezone
 import json
 import os
 import traceback
+
 import websockets
 
-print("[DEBUG] kraken_scraper imported", flush=True)
-
-
-# -----------------------------------------------------------------------------
-# 2. Module-level Constants
-# -----------------------------------------------------------------------------
-SYMBOL = "XBT/USD"                      # Kraken symbol for BTC/USD
-BASE_DIR = "/mnt/market_logs/data/raw"  # Directory to store the output logs
-STREAMS = [                             # Streams to subscribe to
+SYMBOL = "XBT/USD"
+BASE_DIR = "/mnt/market_logs/data/raw"
+STREAMS = [
     {"name": "trade"},
     {"name": "book", "depth": 100},
     {"name": "ticker"},
     {"name": "ohlc", "interval": 1}
 ]
 
-# -----------------------------------------------------------------------------
-# 3. Globals
-# -----------------------------------------------------------------------------
-channel_map: dict[int, dict] = {}       # Tag and Route streams
+channel_map: dict[int, dict] = {}
 
-# -----------------------------------------------------------------------------
-# 4. Helper Functions
-# -----------------------------------------------------------------------------
 def get_log_path(base_dir, pair, stream_type):
-    '''
-    Build and return data/raw/{pair}/{stream_type}/{YYYY-MM-DDTHH}.jsonl.
-    Creates directories if required.
-    '''
+    """Return the hourly JSONL path for a stream and create directories if needed."""
     hour     = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H") 
     dir_path = os.path.join(base_dir, pair, stream_type)
     os.makedirs(dir_path, exist_ok=True)
     return os.path.join(dir_path, f"{hour}.jsonl")
 
 def wrap_message(recv_time: str, wall_clock: str, ch_id: int, stream_info: dict, payload: dict):
-    '''
-    Add metadata to raw payload for storage.
-    Return wrapped message as dict.
-    '''
+    """Wrap a raw exchange payload with metadata."""
     return {
         "recv_time":    recv_time,
         "wall_clock":   wall_clock,
@@ -69,39 +46,22 @@ def wrap_message(recv_time: str, wall_clock: str, ch_id: int, stream_info: dict,
     }
 
 def log_error():
-    '''
-    print full stacktrace on error, write to errors.log file. 
-    '''
+    """Print the current stack trace and append it to errors.log."""
     traceback.print_exc()
-
-    # log full stacktrace to file
     with open("errors.log", "a", encoding="utf-8") as f:
         f.write(f"{datetime.now(timezone.utc).isoformat()} —\n")
         traceback.print_exc(file=f)
         f.write("\n\n")
 
-
-
-# -----------------------------------------------------------------------------
-# 5. Core logic (Stream Listener)
-# -----------------------------------------------------------------------------
+# Core logic (Stream Listener)
 async def log_stream():
-    '''
-    Connect to Kraken WS, subscribe to streams, and continuously
-    receive, tag, wrap, and write messages to disk.
-    '''
-
-    print("[DEBUG] log_stream() entered", flush=True)
-
-
-    url = "wss://ws.kraken.com/"  # Kraken public WebSocket endpoint
-
-    # Reconnect Loop
+    """Connect to Kraken, subscribe to streams, and write messages to disk."""
+    url = "wss://ws.kraken.com/"
     while True:
-        print("[INFO] Opening WebSocket...", flush=True)
+        print("[INFO] open websocket.", flush=True)
         try:
             async with websockets.connect(url) as ws:
-                print("[INFO] Connected. Subscribing to streams...", flush=True)
+                print("[INFO] connected.", flush=True)
                 # Subscribe to all requested STREAMS for SYMBOL
                 for sub in STREAMS:
                     await ws.send(json.dumps({
@@ -116,7 +76,7 @@ async def log_stream():
                         raw = await ws.recv()
                         data = json.loads(raw)
 
-                        # Handle control messages (tag channel info)
+                        # Control messages (tag channel info)
                         if isinstance(data, dict) and data.get("event") == "subscriptionStatus":
                             ch_id   = data["channelID"]
                             sub     = data["subscription"]
@@ -128,7 +88,7 @@ async def log_stream():
                             }
                             continue
 
-                        # Handle real-time data messages
+                        # Data messages
                         if isinstance(data, list) and isinstance(data[0], int):
                             # Extract core variables
                             ch_id       = data[0]
@@ -148,7 +108,7 @@ async def log_stream():
                     except json.JSONDecodeError:
                         continue
                     except websockets.exceptions.ConnectionClosed:
-                        print("[WARN] WebSocket closed. Reconnecting...")
+                        print("[WARNING] WebSocket connnection closed, reconnecting.")
                         break
                     except Exception:
                         log_error()
@@ -156,25 +116,18 @@ async def log_stream():
 
         except Exception as e:
             log_error()
-            print(f"[WARN] Cannot connect: {e!r}. Retry in 5s...")
+            print(f"[WARNING] Cannot connect: {e!r}. Retry in 5 seconds.")
             await asyncio.sleep(5)                                  # pause and retry
 
 
-# -----------------------------------------------------------------------------
-# 6. Entry Point
-# -----------------------------------------------------------------------------
 def main():
-    '''
-    Handles runtime loop and clean shutdown.
-    '''
-    print("[DEBUG] main() entered", flush=True)
+    """Run the logger until interrupted."""
     try:
         asyncio.run(log_stream())
     except KeyboardInterrupt:
-        print("\n[EXIT] Shutdown requested. Exiting cleanly...")
+        print("\n[INFO] Shutdown requested.")
     except Exception as e:
-        print(f"[FATAL] {e!r}")
-
+        print(f"[ERROR] {e!r}")
 
 if __name__ == "__main__":
     main()
