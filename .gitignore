@@ -1,9 +1,11 @@
 venv/
+.venv/
 __pycache__/
+*.pyo
 *.pyc
+*.log
+*.jsonl
 production_logs/
 sanity_logs/
 examples/
 .DS_Store
-rsa.txt
-preTRPS-sample_output.txt
